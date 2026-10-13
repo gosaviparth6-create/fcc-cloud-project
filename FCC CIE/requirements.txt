@@ -1,0 +1,10 @@
+Flask==3.0.0
+flask-cors==4.0.0
+flask-limiter==3.3.0
+itsdangerous==2.1.2
+sqlalchemy==2.0.49
+psycopg2-binary==2.9.11
+gunicorn==21.2.0
+waitress==3.0.2
+boto3>=1.34.0
+python-dotenv>=1.0.0

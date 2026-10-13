@@ -1,0 +1,29 @@
+[Unit]
+Description=Portfolio API Service
+After=network.target
+
+[Service]
+User=PORTFOLIO_USER
+Group=PORTFOLIO_GROUP
+WorkingDirectory=/opt/portfolio
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=PORTFOLIO_ENV=production
+Environment=SECRET_KEY=CHANGE_ME_IN_PRODUCTION
+Environment=DATABASE_URL=POSTGRESQL_CONNECTION_STRING
+Environment=ADMIN_USERNAME=ADMIN_USERNAME_VALUE
+Environment=ADMIN_PASSWORD=ADMIN_PASSWORD_VALUE
+Environment=ALLOWED_ORIGIN=https://YOUR_DOMAIN.COM
+
+ExecStart=/usr/local/bin/gunicorn --bind 127.0.0.1:8000 --workers 4 --worker-class gevent --timeout 120 app:app
+Restart=always
+RestartSec=5s
+
+# Security hardening
+PrivateTmp=true
+ProtectSystem=full
+NoNewPrivileges=true
+PrivateDevices=true
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target

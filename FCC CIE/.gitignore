@@ -1,0 +1,37 @@
+# Environment configuration files
+.env
+.env.*
+!.env.example
+
+# Python cache & compiled bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Python virtual environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# SQLite / local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Local development uploads
+/uploads/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# IDE / Editor folders
+.vscode/
+.idea/
+*.swp
+*~
