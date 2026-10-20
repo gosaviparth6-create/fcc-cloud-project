@@ -2,6 +2,7 @@ Flask==3.0.0
 flask-cors==4.0.0
 flask-limiter==3.3.0
 itsdangerous==2.1.2
+werkzeug>=3.0.0
 sqlalchemy==2.0.49
 psycopg2-binary==2.9.11
 gunicorn==21.2.0
