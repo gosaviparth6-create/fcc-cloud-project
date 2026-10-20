@@ -123,6 +123,8 @@
     }
 
     .logo-badge span { font-size: 16px; }
+    a.logo-badge { text-decoration: none; transition: background 0.2s; }
+    a.logo-badge:hover { background: rgba(99,102,241,0.25); }
 
     h1 {
       font-size: clamp(28px, 5vw, 40px);
@@ -329,7 +331,7 @@
 <!-- NAVBAR -->
 <nav aria-label="Main navigation">
   <a href="home.html" class="nav-brand">
-    <span>🎓</span> FCC CIE
+    <span>🎓</span> Cloud Portfolio
   </a>
   <div class="nav-links">
     <a href="home.html" id="nav-home">Home</a>
@@ -344,6 +346,7 @@
 
 <div class="page-wrapper">
   <div class="header">
+    <a href="admin.html" class="logo-badge" id="admin-login-btn"><span>🛡️</span> Admin Login →</a>
     <h1>Get in Touch</h1>
     <p class="subtitle">Send us a message or submit a document. We'll get back to you shortly.</p>
   </div>
