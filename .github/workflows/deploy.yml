@@ -1,0 +1,68 @@
+name: Deploy Frontend to S3
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'FCC CIE/frontend/**'
+      - '.github/workflows/deploy.yml'
+
+  # Allow manual trigger from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Sync to S3 & Invalidate CloudFront
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      # 1. Checkout the repository
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Configure AWS credentials from GitHub Secrets
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      # 3. Validate the S3 bucket is accessible before syncing
+      - name: Verify S3 bucket access
+        run: |
+          aws s3 ls s3://${{ secrets.S3_BUCKET }} > /dev/null
+          echo "✅ S3 bucket accessible: ${{ secrets.S3_BUCKET }}"
+
+      # 4. Sync frontend folder to S3
+      #    --delete removes files in S3 that no longer exist locally
+      #    --cache-control sets appropriate browser caching headers
+      - name: Deploy to S3
+        run: |
+          aws s3 sync "FCC CIE/frontend/" "s3://${{ secrets.S3_BUCKET }}/" \
+            --delete \
+            --exclude ".DS_Store" \
+            --exclude "*.env" \
+            --cache-control "public, max-age=86400" \
+            --acl public-read
+          echo "✅ Deployment complete"
+
+      # 5. Invalidate CloudFront cache so users see the latest version immediately
+      #    CLOUDFRONT_DISTRIBUTION_ID is optional — skip if not using CloudFront
+      - name: Invalidate CloudFront cache
+        if: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID != '' }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+          echo "✅ CloudFront cache invalidated"
+
+      # 6. Print the live URL
+      - name: Print live URL
+        run: |
+          echo "🌐 Live at: http://${{ secrets.S3_BUCKET }}.s3-website.${{ secrets.AWS_REGION }}.amazonaws.com"

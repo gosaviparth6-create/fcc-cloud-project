@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FCC CIE — Cloud Portfolio</title>
+  <meta name="description" content="A cloud-deployed static portfolio built on AWS with CI/CD via GitHub Actions, EC2, S3, IAM, VPC, and CloudWatch." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0f1e;
+      --surface: rgba(255,255,255,0.04);
+      --surface2: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+      --accent: #6366f1;
+      --accent2: #8b5cf6;
+      --accent3: #06b6d4;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --radius: 16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── ANIMATED BACKGROUND ── */
+    .bg-mesh {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-mesh::before {
+      content: '';
+      position: absolute;
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
+      top: -200px; left: -200px;
+      animation: drift1 12s ease-in-out infinite alternate;
+    }
+    .bg-mesh::after {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%);
+      bottom: -150px; right: -150px;
+      animation: drift2 10s ease-in-out infinite alternate;
+    }
+    @keyframes drift1 { from { transform: translate(0,0); } to { transform: translate(60px, 40px); } }
+    @keyframes drift2 { from { transform: translate(0,0); } to { transform: translate(-50px, -30px); } }
+
+    /* ── NAVBAR ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: rgba(10,15,30,0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #a5b4fc;
+      text-decoration: none;
+    }
+    .nav-brand span { font-size: 20px; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--text);
+      background: rgba(255,255,255,0.07);
+    }
+    .nav-links a.active { color: #a5b4fc; }
+    .nav-admin {
+      font-size: 13px;
+      color: #a5b4fc;
+      text-decoration: none;
+      padding: 6px 14px;
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 8px;
+      transition: all 0.2s;
+      margin-left: 8px;
+    }
+    .nav-admin:hover { background: rgba(99,102,241,0.12); }
+
+    /* ── MAIN CONTENT ── */
+    main {
+      position: relative;
+      z-index: 1;
+      padding-top: 64px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: calc(100vh - 64px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 24px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #a5b4fc;
+      margin-bottom: 28px;
+      letter-spacing: 0.04em;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .hero-title {
+      font-size: clamp(40px, 7vw, 72px);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+    .hero-title .line1 {
+      display: block;
+      background: linear-gradient(135deg, #fff 0%, #c7d2fe 50%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-title .line2 {
+      display: block;
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(16px, 2.5vw, 20px);
+      color: var(--muted);
+      max-width: 600px;
+      line-height: 1.7;
+      margin-bottom: 44px;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 28px;
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(99,102,241,0.35);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,102,241,0.5); }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+
+    /* ── TECH STACK STRIP ── */
+    .tech-strip {
+      margin-top: 80px;
+      animation: fadeUp 0.6s 0.4s ease both;
+    }
+    .tech-strip-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 20px;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      transition: all 0.25s;
+    }
+    .badge:hover { border-color: rgba(99,102,241,0.4); color: #a5b4fc; transform: translateY(-2px); }
+    .badge-icon { font-size: 16px; }
+
+    /* ── STATS SECTION ── */
+    .stats-section {
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      transition: all 0.25s;
+    }
+    .stat-card:hover {
+      border-color: rgba(99,102,241,0.3);
+      background: rgba(99,102,241,0.05);
+      transform: translateY(-4px);
+    }
+    .stat-icon { font-size: 32px; margin-bottom: 12px; }
+    .stat-num {
+      font-size: 36px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a5b4fc, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+    /* ── UNIT HIGHLIGHTS ── */
+    .units-section {
+      padding: 80px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .section-title {
+      text-align: center;
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #fff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .section-sub {
+      text-align: center;
+      color: var(--muted);
+      font-size: 15px;
+      margin-bottom: 48px;
+    }
+    .units-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .unit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s;
+    }
+    .unit-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+    .unit-card:hover { border-color: rgba(99,102,241,0.25); transform: translateY(-4px); }
+    .unit-card:hover::before { transform: scaleX(1); }
+    .unit-num {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6366f1;
+      margin-bottom: 8px;
+    }
+    .unit-title { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+    .unit-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .unit-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 14px;
+    }
+    .unit-tag {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.2);
+      color: #a5b4fc;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 40px 24px;
+      font-size: 13px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+    }
+    footer a { color: #a5b4fc; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 16px; }
+      .nav-links a { padding: 5px 10px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-mesh" aria-hidden="true"></div>
+
+<!-- NAVBAR -->
+<nav aria-label="Main navigation">
+  <a href="home.html" class="nav-brand" id="nav-brand">
+    <span>🎓</span> FCC CIE
+  </a>
+  <div class="nav-links">
+    <a href="home.html" class="active" id="nav-home">Home</a>
+    <a href="about.html" id="nav-about">About</a>
+    <a href="projects.html" id="nav-projects">Projects</a>
+    <a href="index.html" id="nav-contact">Contact</a>
+    <a href="admin.html" class="nav-admin" id="nav-admin">Admin →</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="hero-heading">
+    <div class="hero-badge">☁️ AWS Cloud Portfolio — FCC CIE Project</div>
+    <h1 class="hero-title" id="hero-heading">
+      <span class="line1">Cloud-Deployed</span>
+      <span class="line2">Static Portfolio</span>
+    </h1>
+    <p class="hero-sub">
+      A fully functional portfolio hosted on AWS — featuring EC2, S3, IAM, VPC, CloudWatch,
+      and automated CI/CD via GitHub Actions. Built to demonstrate all 5 syllabus units.
+    </p>
+    <div class="hero-cta">
+      <a href="projects.html" class="btn btn-primary" id="cta-projects">View Projects →</a>
+      <a href="about.html" class="btn btn-secondary" id="cta-about">About This Project</a>
+    </div>
+
+    <!-- TECH BADGES -->
+    <div class="tech-strip">
+      <div class="tech-strip-label">Built with</div>
+      <div class="badges">
+        <span class="badge"><span class="badge-icon">🖥️</span> Amazon EC2</span>
+        <span class="badge"><span class="badge-icon">🗄️</span> Amazon S3</span>
+        <span class="badge"><span class="badge-icon">🔐</span> IAM</span>
+        <span class="badge"><span class="badge-icon">🌐</span> VPC</span>
+        <span class="badge"><span class="badge-icon">📊</span> CloudWatch</span>
+        <span class="badge"><span class="badge-icon">⚙️</span> GitHub Actions</span>
+        <span class="badge"><span class="badge-icon">🐧</span> Linux (Amazon Linux 2023)</span>
+        <span class="badge"><span class="badge-icon">🐍</span> Flask + Gunicorn</span>
+        <span class="badge"><span class="badge-icon">🔀</span> Nginx</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="stats-section" aria-label="Project statistics">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📄</div>
+        <div class="stat-num">5</div>
+        <div class="stat-label">Portfolio Pages</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">☁️</div>
+        <div class="stat-num">5</div>
+        <div class="stat-label">AWS Services Used</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔄</div>
+        <div class="stat-num">CI/CD</div>
+        <div class="stat-label">GitHub Actions Pipeline</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔒</div>
+        <div class="stat-num">IAM</div>
+        <div class="stat-label">Least-Privilege Access</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SYLLABUS UNIT HIGHLIGHTS -->
+  <section class="units-section" aria-labelledby="units-heading">
+    <h2 class="section-title" id="units-heading">Syllabus Unit Coverage</h2>
+    <p class="section-sub">Each unit of the FCC CIE syllabus is demonstrated through hands-on AWS work.</p>
+    <div class="units-grid">
+      <article class="unit-card">
+        <div class="unit-num">Unit 1</div>
+        <div class="unit-title">Linux &amp; Virtualization</div>
+        <div class="unit-desc">Deployed app on EC2 using Amazon Linux 2023. Managed file permissions, processes, systemd services, SSH key-based auth, and Gunicorn setup.</div>
+        <div class="unit-tags">
+          <span class="unit-tag">SSH</span><span class="unit-tag">systemd</span>
+          <span class="unit-tag">chmod/chown</span><span class="unit-tag">EC2</span>
+        </div>
+      </article>
+      <article class="unit-card">
+        <div class="unit-num">Unit 2</div>
+        <div class="unit-title">Networking</div>
+        <div class="unit-desc">Configured VPC with public/private subnets, CIDR blocks, Internet Gateway, route tables, and Security Groups on ports 22, 80, and 443.</div>
+        <div class="unit-tags">
+          <span class="unit-tag">VPC</span><span class="unit-tag">CIDR</span>
+          <span class="unit-tag">Security Groups</span><span class="unit-tag">DNS</span>
+        </div>
+      </article>
+      <article class="unit-card">
+        <div class="unit-num">Unit 3</div>
+        <div class="unit-title">Cloud Fundamentals</div>
+        <div class="unit-desc">Compared IaaS (EC2) vs PaaS (Render) vs SaaS. Applied AWS shared responsibility model and designed for elasticity with stateless frontend.</div>
+        <div class="unit-tags">
+          <span class="unit-tag">IaaS</span><span class="unit-tag">PaaS</span>
+          <span class="unit-tag">Shared Responsibility</span>
+        </div>
+      </article>
+      <article class="unit-card">
+        <div class="unit-num">Unit 4</div>
+        <div class="unit-title">Core AWS Services</div>
+        <div class="unit-desc">Used EC2, S3 (static hosting + file storage), IAM (users/roles/policies), VPC, and CloudWatch. Compared to Azure VM and Azure Blob Storage.</div>
+        <div class="unit-tags">
+          <span class="unit-tag">EC2</span><span class="unit-tag">S3</span>
+          <span class="unit-tag">IAM</span><span class="unit-tag">CloudWatch</span>
+        </div>
+      </article>
+      <article class="unit-card">
+        <div class="unit-num">Unit 5</div>
+        <div class="unit-title">DevOps, Git &amp; Monitoring</div>
+        <div class="unit-desc">GitHub repo with branch-based workflow, GitHub Actions CI/CD auto-deploying to S3. CloudWatch agent monitors EC2, billing alerts configured.</div>
+        <div class="unit-tags">
+          <span class="unit-tag">GitHub Actions</span><span class="unit-tag">CI/CD</span>
+          <span class="unit-tag">CloudWatch</span><span class="unit-tag">Billing Alerts</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>FCC CIE Cloud Project · Hosted on <a href="https://aws.amazon.com" target="_blank" rel="noopener">AWS</a> · 
+  Source on <a href="https://github.com" target="_blank" rel="noopener">GitHub</a></p>
+</footer>
+
+</body>
+</html>

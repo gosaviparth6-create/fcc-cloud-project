@@ -25,10 +25,14 @@ REQUIRED_KEYS: Tuple[str, ...] = (
     "ADMIN_PASSWORD",
     "SECRET_KEY",
     "DATABASE_URL",
-    "S3_BUCKET",
-    "AWS_REGION",
     "ALLOWED_ORIGIN",
     "PORT",
+)
+
+# Optional keys (only needed when STORAGE_BACKEND=s3)
+OPTIONAL_KEYS: Tuple[str, ...] = (
+    "S3_BUCKET",
+    "AWS_REGION",
 )
 
 # Sensitive keys that must NEVER be exposed in logs or string representations
@@ -182,8 +186,8 @@ def _load_and_validate_config() -> Dict[str, Any]:
         "ADMIN_PASSWORD": str(raw_settings["ADMIN_PASSWORD"]),
         "SECRET_KEY": str(raw_settings["SECRET_KEY"]),
         "DATABASE_URL": str(raw_settings["DATABASE_URL"]).strip(),
-        "S3_BUCKET": str(raw_settings["S3_BUCKET"]).strip(),
-        "AWS_REGION": str(raw_settings["AWS_REGION"]).strip(),
+        "S3_BUCKET": str(raw_settings.get("S3_BUCKET") or os.getenv("S3_BUCKET", "")).strip(),
+        "AWS_REGION": str(raw_settings.get("AWS_REGION") or os.getenv("AWS_REGION", "us-east-1")).strip(),
         "ALLOWED_ORIGIN": str(raw_settings["ALLOWED_ORIGIN"]).strip(),
         "PORT": port_num,
         "STORAGE_BACKEND": storage_backend,

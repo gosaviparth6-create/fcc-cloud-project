@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FCC CIE — Projects</title>
+  <meta name="description" content="Projects built for the FCC CIE cloud computing syllabus — AWS-hosted static portfolio and Flask contact API on EC2." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0f1e;
+      --surface: rgba(255,255,255,0.04);
+      --surface2: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+      --accent: #6366f1;
+      --accent2: #8b5cf6;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --radius: 16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .bg-mesh { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .bg-mesh::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(99,102,241,0.14) 0%, transparent 70%);
+      top: -200px; left: -100px;
+    }
+    .bg-mesh::after {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(6,182,212,0.1) 0%, transparent 70%);
+      bottom: -100px; right: -100px;
+    }
+
+    /* ── NAVBAR ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: rgba(10,15,30,0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 16px; font-weight: 700; color: #a5b4fc; text-decoration: none;
+    }
+    .nav-brand span { font-size: 20px; }
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: 14px;
+      font-weight: 500; padding: 6px 14px; border-radius: 8px; transition: all 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); background: rgba(255,255,255,0.07); }
+    .nav-links a.active { color: #a5b4fc; }
+    .nav-admin {
+      font-size: 13px; color: #a5b4fc; text-decoration: none;
+      padding: 6px 14px; border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 8px; transition: all 0.2s; margin-left: 8px;
+    }
+    .nav-admin:hover { background: rgba(99,102,241,0.12); }
+
+    /* ── LAYOUT ── */
+    main {
+      position: relative; z-index: 1;
+      padding-top: 64px;
+      max-width: 960px;
+      margin: 0 auto;
+      padding-left: 24px; padding-right: 24px;
+    }
+
+    .page-header {
+      padding: 64px 0 52px;
+      text-align: center;
+      animation: fadeUp 0.6s ease both;
+    }
+    .page-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 999px; padding: 6px 18px; font-size: 13px;
+      font-weight: 500; color: #a5b4fc; margin-bottom: 24px;
+    }
+    .page-title {
+      font-size: clamp(32px, 5vw, 52px); font-weight: 800; line-height: 1.15;
+      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 16px;
+    }
+    .page-sub { font-size: 17px; color: var(--muted); line-height: 1.7; max-width: 560px; margin: 0 auto; }
+
+    /* ── PROJECT CARD ── */
+    .projects-grid {
+      display: flex; flex-direction: column; gap: 32px;
+      margin-bottom: 60px;
+    }
+
+    .project-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.3s;
+      animation: fadeUp 0.6s ease both;
+    }
+    .project-card:hover {
+      border-color: rgba(99,102,241,0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.1);
+    }
+
+    .project-hero {
+      height: 6px;
+    }
+    .project-hero.gradient-1 { background: linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4); }
+    .project-hero.gradient-2 { background: linear-gradient(90deg, #10b981, #06b6d4, #6366f1); }
+    .project-hero.gradient-3 { background: linear-gradient(90deg, #f59e0b, #ef4444, #8b5cf6); }
+
+    .project-body { padding: 36px; }
+
+    .project-meta {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 18px;
+    }
+    .project-icon {
+      width: 52px; height: 52px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+    }
+    .project-type {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: #6366f1; margin-bottom: 4px;
+    }
+    .project-name { font-size: 22px; font-weight: 700; }
+
+    .project-desc { font-size: 15px; color: var(--muted); line-height: 1.7; margin-bottom: 24px; }
+
+    .project-features {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .feature-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13px; color: var(--muted);
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .feature-item .fi { flex-shrink: 0; font-size: 15px; }
+
+    .project-tech {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 28px;
+    }
+    .tech-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 12px; font-weight: 500; color: #a5b4fc;
+    }
+    .tech-badge.green {
+      background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.2); color: #6ee7b7;
+    }
+    .tech-badge.cyan {
+      background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.2); color: #67e8f9;
+    }
+    .tech-badge.amber {
+      background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); color: #fcd34d;
+    }
+
+    .project-links { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px; border-radius: 9px;
+      font-family: 'Inter', sans-serif; font-size: 14px;
+      font-weight: 600; text-decoration: none; cursor: pointer;
+      border: none; transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99,102,241,0.5); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border); color: var(--text);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+
+    /* ── CI/CD FLOW ── */
+    .cicd-section {
+      margin-bottom: 60px;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+    .section-heading {
+      font-size: 22px; font-weight: 700; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .cicd-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+    }
+    .flow-steps {
+      display: flex; align-items: center;
+      gap: 0; flex-wrap: wrap;
+    }
+    .flow-step {
+      flex: 1; min-width: 120px;
+      text-align: center; padding: 16px 8px;
+    }
+    .flow-icon { font-size: 28px; margin-bottom: 8px; }
+    .flow-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .flow-sub { font-size: 11px; color: var(--muted); }
+    .flow-arrow {
+      font-size: 20px; color: rgba(99,102,241,0.5);
+      padding: 0 4px; flex-shrink: 0;
+    }
+    .cicd-code {
+      margin-top: 24px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      color: var(--muted);
+      overflow-x: auto;
+    }
+    .cicd-code .kw { color: #c792ea; }
+    .cicd-code .str { color: #c3e88d; }
+    .cicd-code .cmt { color: rgba(148,163,184,0.45); }
+    .cicd-code .hl { color: #89ddff; }
+
+    footer {
+      text-align: center; padding: 40px 24px;
+      font-size: 13px; color: var(--muted);
+      border-top: 1px solid var(--border);
+      position: relative; z-index: 1;
+    }
+    footer a { color: #a5b4fc; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 16px; }
+      .nav-links a { padding: 5px 9px; font-size: 13px; }
+      main { padding-left: 16px; padding-right: 16px; }
+      .project-body { padding: 24px 20px; }
+      .flow-steps { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-mesh" aria-hidden="true"></div>
+
+<!-- NAVBAR -->
+<nav aria-label="Main navigation">
+  <a href="home.html" class="nav-brand">
+    <span>🎓</span> FCC CIE
+  </a>
+  <div class="nav-links">
+    <a href="home.html" id="nav-home">Home</a>
+    <a href="about.html" id="nav-about">About</a>
+    <a href="projects.html" class="active" id="nav-projects">Projects</a>
+    <a href="index.html" id="nav-contact">Contact</a>
+    <a href="admin.html" class="nav-admin" id="nav-admin">Admin →</a>
+  </div>
+</nav>
+
+<main>
+
+  <!-- PAGE HEADER -->
+  <header class="page-header">
+    <div class="page-badge">🚀 Projects</div>
+    <h1 class="page-title">What Was Built</h1>
+    <p class="page-sub">
+      Two production-grade projects demonstrating every AWS service in the FCC CIE syllabus.
+    </p>
+  </header>
+
+  <!-- PROJECTS -->
+  <div class="projects-grid">
+
+    <!-- PROJECT 1: PORTFOLIO -->
+    <article class="project-card" aria-labelledby="proj1-title">
+      <div class="project-hero gradient-1"></div>
+      <div class="project-body">
+        <div class="project-meta">
+          <div class="project-icon">🌐</div>
+          <div>
+            <div class="project-type">Unit 3, 4, 5 · Static Site + CI/CD</div>
+            <div class="project-name" id="proj1-title">Cloud-Deployed Static Portfolio</div>
+          </div>
+        </div>
+        <p class="project-desc">
+          This very website — a multi-page static portfolio hosted on AWS S3 with an automated GitHub Actions
+          CI/CD pipeline that deploys on every push to <code style="background:rgba(99,102,241,0.15);padding:2px 6px;border-radius:4px;font-size:12px;">main</code>.
+          Demonstrates public cloud, IaaS vs PaaS, shared responsibility, elasticity, and DevOps best practices.
+        </p>
+        <div class="project-features">
+          <div class="feature-item"><span class="fi">📄</span> 5-page static site (Home, About, Projects, Contact, Admin)</div>
+          <div class="feature-item"><span class="fi">🗄️</span> S3 static website hosting with public read policy</div>
+          <div class="feature-item"><span class="fi">⚙️</span> GitHub Actions auto-deploy on push to main branch</div>
+          <div class="feature-item"><span class="fi">🌐</span> CloudFront CDN for HTTPS and global distribution</div>
+          <div class="feature-item"><span class="fi">🔐</span> IAM role with least-privilege S3 sync permissions</div>
+          <div class="feature-item"><span class="fi">📊</span> CloudWatch billing alarm at $5 threshold</div>
+        </div>
+        <div class="project-tech">
+          <span class="tech-badge">S3 Static Hosting</span>
+          <span class="tech-badge">GitHub Actions</span>
+          <span class="tech-badge cyan">CloudFront</span>
+          <span class="tech-badge amber">IAM</span>
+          <span class="tech-badge">HTML / CSS / JS</span>
+          <span class="tech-badge cyan">CloudWatch</span>
+        </div>
+        <div class="project-links">
+          <a href="home.html" class="btn btn-primary" id="view-portfolio-btn">View Portfolio →</a>
+          <a href="https://github.com" target="_blank" rel="noopener" class="btn btn-ghost" id="github-portfolio-btn">GitHub Repo</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- PROJECT 2: FLASK API -->
+    <article class="project-card" aria-labelledby="proj2-title">
+      <div class="project-hero gradient-2"></div>
+      <div class="project-body">
+        <div class="project-meta">
+          <div class="project-icon">⚙️</div>
+          <div>
+            <div class="project-type">Unit 1, 2, 4 · EC2 API Backend</div>
+            <div class="project-name" id="proj2-title">Flask Contact API on EC2</div>
+          </div>
+        </div>
+        <p class="project-desc">
+          A hardened REST API running on Amazon EC2 (Amazon Linux 2023) behind Nginx as a reverse proxy.
+          Handles contact form submissions, PDF uploads to S3, admin authentication with signed JWT-style
+          tokens, rate limiting, and structured JSON logging via CloudWatch Agent.
+        </p>
+        <div class="project-features">
+          <div class="feature-item"><span class="fi">🐧</span> EC2 (t2.micro) with Amazon Linux 2023, SSH key-pair</div>
+          <div class="feature-item"><span class="fi">🔀</span> Nginx reverse proxy (port 80/443 → Gunicorn 8000)</div>
+          <div class="feature-item"><span class="fi">🐍</span> Flask API with rate limiting (flask-limiter)</div>
+          <div class="feature-item"><span class="fi">🔑</span> Signed bearer tokens (itsdangerous, SHA-256, 1hr expiry)</div>
+          <div class="feature-item"><span class="fi">🗄️</span> S3 PDF upload with AES-256 server-side encryption</div>
+          <div class="feature-item"><span class="fi">🌐</span> VPC: public subnet, SG ports 22/80/443 only</div>
+        </div>
+        <div class="project-tech">
+          <span class="tech-badge">EC2 (t2.micro)</span>
+          <span class="tech-badge">Nginx</span>
+          <span class="tech-badge green">Flask + Gunicorn</span>
+          <span class="tech-badge">S3 (uploads)</span>
+          <span class="tech-badge amber">IAM Role</span>
+          <span class="tech-badge cyan">CloudWatch Agent</span>
+          <span class="tech-badge green">PostgreSQL / SQLite</span>
+          <span class="tech-badge">VPC + SG</span>
+        </div>
+        <div class="project-links">
+          <a href="index.html" class="btn btn-primary" id="view-contact-btn">Try Contact Form →</a>
+          <a href="https://github.com" target="_blank" rel="noopener" class="btn btn-ghost" id="github-api-btn">GitHub Repo</a>
+        </div>
+      </div>
+    </article>
+
+    <!-- PROJECT 3: LINUX SETUP -->
+    <article class="project-card" aria-labelledby="proj3-title">
+      <div class="project-hero gradient-3"></div>
+      <div class="project-body">
+        <div class="project-meta">
+          <div class="project-icon">🐧</div>
+          <div>
+            <div class="project-type">Unit 1, 2 · Linux + Networking</div>
+            <div class="project-name" id="proj3-title">EC2 Linux Server Configuration</div>
+          </div>
+        </div>
+        <p class="project-desc">
+          Documented setup of an EC2 Linux server from scratch — SSH access, user management, systemd
+          service management, firewall rules, VPC networking, and SSL certificate provisioning with Let's Encrypt.
+          Demonstrates core Linux and networking skills required by the syllabus.
+        </p>
+        <div class="project-features">
+          <div class="feature-item"><span class="fi">🔐</span> SSH key-pair auth, no password login</div>
+          <div class="feature-item"><span class="fi">👤</span> System user (<code style="font-size:11px;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;">portfolio</code>) with restricted shell</div>
+          <div class="feature-item"><span class="fi">🔧</span> systemd service with auto-restart on failure</div>
+          <div class="feature-item"><span class="fi">🌐</span> VPC CIDR 10.0.0.0/16, public subnet, IGW</div>
+          <div class="feature-item"><span class="fi">🔒</span> SSL/TLS via Let's Encrypt + certbot-nginx</div>
+          <div class="feature-item"><span class="fi">📋</span> AI-assisted troubleshooting of Nginx/SSH errors</div>
+        </div>
+        <div class="project-tech">
+          <span class="tech-badge green">Amazon Linux 2023</span>
+          <span class="tech-badge">systemd</span>
+          <span class="tech-badge">SSH</span>
+          <span class="tech-badge cyan">Let's Encrypt</span>
+          <span class="tech-badge">VPC / Subnets</span>
+          <span class="tech-badge amber">Security Groups</span>
+        </div>
+        <div class="project-links">
+          <a href="https://github.com" target="_blank" rel="noopener" class="btn btn-primary" id="deploy-readme-btn">Deploy README →</a>
+          <a href="about.html" class="btn btn-ghost" id="view-arch-btn">Architecture Docs</a>
+        </div>
+      </div>
+    </article>
+
+  </div>
+
+  <!-- CI/CD FLOW -->
+  <section class="cicd-section" aria-labelledby="cicd-heading">
+    <h2 class="section-heading" id="cicd-heading">⚙️ CI/CD Pipeline Flow</h2>
+    <div class="cicd-flow">
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-icon">✏️</div>
+          <div class="flow-label">Code Push</div>
+          <div class="flow-sub">git push to main</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-icon">🔄</div>
+          <div class="flow-label">GitHub Actions</div>
+          <div class="flow-sub">Workflow triggered</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-icon">🔐</div>
+          <div class="flow-label">AWS Auth</div>
+          <div class="flow-sub">Secrets → credentials</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-icon">🚀</div>
+          <div class="flow-label">S3 Sync</div>
+          <div class="flow-sub">frontend/ → bucket</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-icon">🌐</div>
+          <div class="flow-label">Live!</div>
+          <div class="flow-sub">CloudFront serves</div>
+        </div>
+      </div>
+      <div class="cicd-code"><span class="cmt"># .github/workflows/deploy.yml (key steps)</span>
+<span class="kw">on:</span> push: branches: [<span class="str">main</span>]
+
+<span class="kw">jobs:</span>
+  deploy:
+    <span class="hl">- uses:</span> <span class="str">aws-actions/configure-aws-credentials@v4</span>
+      <span class="kw">with:</span>
+        aws-access-key-id:     <span class="str">${{ secrets.AWS_ACCESS_KEY_ID }}</span>
+        aws-secret-access-key: <span class="str">${{ secrets.AWS_SECRET_ACCESS_KEY }}</span>
+        aws-region:            <span class="str">${{ secrets.AWS_REGION }}</span>
+
+    <span class="hl">- run:</span> <span class="str">aws s3 sync ./frontend s3://${{ secrets.S3_BUCKET }} --delete</span>
+    <span class="hl">- run:</span> <span class="str">aws cloudfront create-invalidation --paths "/*"</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>FCC CIE Cloud Project · Hosted on <a href="https://aws.amazon.com" target="_blank" rel="noopener">AWS</a> ·
+  Source on <a href="https://github.com" target="_blank" rel="noopener">GitHub</a></p>
+</footer>
+
+</body>
+</html>
